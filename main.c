@@ -7,6 +7,7 @@
 
 #define X_SIZE 50
 #define Y_SIZE 30
+#define DELAY 500000
 
 char board[Y_SIZE][X_SIZE] = {' '};
 
@@ -185,7 +186,24 @@ bool move_snake(snake_t *snake, direction_t dir)
                 return true;
             }
             tmp->y_pos = tmp->y_pos - 1;
+            break;
+        
+        case RIGHT:
+            if(tmp->x_pos == X_SIZE - 1)
+            {
+                end_game = true;
+                return true;
+            }
+            tmp->x_pos = tmp->x_pos + 1;
+            break;
 
+        case DOWN:
+            if(tmp->y_pos == Y_SIZE - 1)
+            {
+                end_game = true;
+                return true;
+            }
+            tmp->y_pos = tmp->y_pos + 1;
             break;
     }
 
@@ -205,37 +223,73 @@ bool move_snake(snake_t *snake, direction_t dir)
     return true;
 }
 
-char keyboard()
+direction_t keyboard(direction_t dir)
 {
     if(kbhit())
     {
-        return getch();
+        char key = getch();
+        
+        if((key == 'w' && dir == DOWN)
+            ||(key == 's' && dir == UP)
+            ||(key == 'a' && dir == RIGHT)
+            ||(key == 'd' && dir == LEFT))
+        {
+            return dir;
+        } 
+        switch(key)
+        {
+            case 'w':
+                return UP;
+                break;
+
+            case 'a':
+                return LEFT;
+                break;
+
+            case 'd':
+                return RIGHT;
+                break;
+
+            case 's':
+                return DOWN;
+                break;
+
+            case 'q':
+                end_game = true;
+                return dir;
+                break;
+        }
+
     }
+
+    return dir;
 }
 
 int main()
 {
     initialize_board(' ');
     crate_border('#');
-    snake_t *snake = create_snake();
+    snake_t *snake =  create_snake();
+    add_more_snake(snake);
+    add_more_snake(snake);
+    add_more_snake(snake);
+
     draw_snake(snake);
     print_board();
-    
-    for(int i = 0; i < 3; i++)
-    {
-        sleep(1);
-        add_more_snake(snake);
-        draw_snake(snake);
-        print_board();
-    }
+    sleep(2);
 
-    for(int i = 0; i < 3; i++)
+    direction_t movement = UP;
+
+    while(true)
     {
-        sleep(1);
         clear_board(' ');
-        move_snake(snake, UP);
+        usleep(DELAY);
+        movement = keyboard(movement);
+        fflush(stdin);
+        move_snake(snake, movement);
         draw_snake(snake);
         print_board();
+        if(end_game == true) exit(0);
     }
     
     return 0;
