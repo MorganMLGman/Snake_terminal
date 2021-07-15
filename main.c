@@ -7,7 +7,7 @@
 
 #define X_SIZE 50
 #define Y_SIZE 30
-#define DELAY 500000
+#define DELAY 300000
 
 char board[Y_SIZE][X_SIZE] = {' '};
 
@@ -189,7 +189,7 @@ bool move_snake(snake_t *snake, direction_t dir)
             break;
         
         case RIGHT:
-            if(tmp->x_pos == X_SIZE - 1)
+            if(tmp->x_pos == X_SIZE - 2)
             {
                 end_game = true;
                 return true;
@@ -198,7 +198,7 @@ bool move_snake(snake_t *snake, direction_t dir)
             break;
 
         case DOWN:
-            if(tmp->y_pos == Y_SIZE - 1)
+            if(tmp->y_pos == Y_SIZE - 2)
             {
                 end_game = true;
                 return true;
@@ -227,6 +227,7 @@ direction_t keyboard(direction_t dir)
 {
     if(kbhit())
     {
+        fflush(stdin);
         char key = getch();
         
         if((key == 'w' && dir == DOWN)
@@ -279,17 +280,23 @@ int main()
     sleep(2);
 
     direction_t movement = UP;
+    uint16_t score = 0;
 
     while(true)
     {
         clear_board(' ');
         usleep(DELAY);
+        printf("SCORE: %d\n", score);
         movement = keyboard(movement);
-        fflush(stdin);
+        
         move_snake(snake, movement);
         draw_snake(snake);
         print_board();
-        if(end_game == true) exit(0);
+        if(end_game == true)
+        {
+            printf("GAME ENDED\n");
+            exit(0);
+        } 
     }
     
     return 0;
