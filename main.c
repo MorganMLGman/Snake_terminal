@@ -271,6 +271,27 @@ bool move_snake(snake_t *snake, direction_t dir)
     return true;
 }
 
+void detect_snake_colision(snake_t *snake)
+{
+    if(snake == NULL)
+    {
+        return;
+    }
+
+    snake_t *tmp = snake;
+    tmp = tmp->next;
+
+    while(tmp != NULL)
+    {
+        if(snake->x_pos == tmp->x_pos && snake->y_pos == tmp->y_pos)
+        {
+            end_game = true;
+        }
+        tmp = tmp->next;
+    }
+
+}
+
 direction_t keyboard(direction_t dir)
 {
     if(kbhit())
@@ -360,6 +381,7 @@ int main()
 
         draw_food(food);    
         while(move_snake(snake, movement) == false){}
+        detect_snake_colision(snake);
         while(draw_snake(snake) == false){}
         print_board();
          
