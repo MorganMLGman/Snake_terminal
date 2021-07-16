@@ -7,7 +7,7 @@
 
 #define X_SIZE 50
 #define Y_SIZE 30
-#define DELAY 300000
+#define DELAY 150000
 
 char board[Y_SIZE][X_SIZE] = {' '};
 
@@ -19,6 +19,13 @@ typedef struct snake_s
     uint8_t y_pos;
     struct snake_s *next;
 } snake_t;
+
+typedef struct food_s
+{
+    uint8_t x_pos;
+    uint8_t y_pos;
+} food_t;
+
 
 typedef enum direction_s
 {
@@ -44,11 +51,12 @@ void print_board()
     system("cls");
     for(int i = 0; i < Y_SIZE; i++)
     {
-        for(int j = 0; j < X_SIZE; j++)
-        {
-            printf("%c", board[i][j]);
-        }
-        printf("\n");
+        printf("%.*s\n", X_SIZE, board[i]);
+        // for(int j = 0; j < X_SIZE; j++)
+        // {
+        //     printf("%c", board[i][j]);
+        // }
+        // printf("\n");
     }
 }
 
@@ -77,16 +85,56 @@ void clear_board(char sign)
     }
 }
 
-bool add_food(uint8_t x, uint8_t y)
+food_t *add_random_food(snake_t *snake)
 {
-    if( x < 1 || x > X_SIZE - 1 || y < 1 || y > Y_SIZE - 1)
+    if(snake == NULL)
     {
-        return false;
+        return NULL;
+    }
+
+    snake_t *tmp = snake;
+
+    food_t *food = (food_t *) malloc(sizeof(food_t));
+
+    food->x_pos = (rand() % (X_SIZE - 2)) + 1;
+    food->y_pos = (rand() % (Y_SIZE - 2)) + 1;
+
+    while(tmp != NULL)
+    {
+        if(food->x_pos == tmp->x_pos || food->y_pos == tmp->y_pos)
+        {
+            return NULL;
+        }
+        tmp = tmp->next;
+    }
+
+    return food;
+}
+
+void draw_food(food_t *food)
+{
+    if(food == NULL)
+    {
+        return;
+    }
+
+    board[food->y_pos][food->x_pos] = '+';
+}
+
+bool check_if_eaten(snake_t *snake, food_t *food)
+{
+    if(snake == NULL || food == NULL)
+    {
+        exit(1);
+    }
+
+    if(snake->x_pos == food->x_pos && snake->y_pos == food->y_pos)
+    {
+        return true;
     }
     else
     {
-        board[y][x] = '+';
-        return true;
+        return false;
     }
 }
 
@@ -227,7 +275,6 @@ direction_t keyboard(direction_t dir)
 {
     if(kbhit())
     {
-        fflush(stdin);
         char key = getch();
         
         if((key == 'w' && dir == DOWN)
@@ -268,6 +315,8 @@ direction_t keyboard(direction_t dir)
 
 int main()
 {
+    srand(time(NULL));
+
     initialize_board(' ');
     crate_border('#');
     snake_t *snake =  create_snake();
@@ -282,21 +331,38 @@ int main()
     direction_t movement = UP;
     uint16_t score = 0;
 
+    food_t *food = add_random_food(snake);
+
+    if(food == NULL)
+    {
+        return 1;
+    }
+
     while(true)
     {
         clear_board(' ');
         usleep(DELAY);
-        printf("SCORE: %d\n", score);
         movement = keyboard(movement);
-        
-        move_snake(snake, movement);
-        draw_snake(snake);
-        print_board();
+
         if(end_game == true)
         {
-            printf("GAME ENDED\n");
+            printf("SCORE %d\nGAME ENDED\n", score);
             exit(0);
-        } 
+        }
+
+        if(check_if_eaten(snake, food) == true)
+        {
+            while(add_more_snake(snake) == false){}
+            food = add_random_food(snake);
+            while (food == NULL){food = add_random_food(snake);}
+            score+= 10;
+        }
+
+        draw_food(food);    
+        while(move_snake(snake, movement) == false){}
+        while(draw_snake(snake) == false){}
+        print_board();
+         
     }
     
     return 0;
